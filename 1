@@ -1,0 +1,800 @@
+#include <stdio.h>
+#include <assert.h>
+#include <string.h>
+#include <malloc.h>
+#include <stdlib.h>
+
+#define N 10
+typedef int ElemType;
+
+typedef struct Node
+{
+    ElemType score;   //分数
+    ElemType rank;    //排名
+    char sex[20];     //性别
+    char name[20];    //姓名
+    char college[20]; //学院
+    char item[20];    //项目
+    char mark[20];    //成绩
+    char place[20];   //地点
+    char time[20];    //时间
+    struct Node* next;
+} LinkNode, * LinkList;
+
+
+
+void Init(LinkList& Head);
+int  GetScore(int rank);
+void Input(LinkList& Head, int& CollegeNum, int& ItemNum, char Colleges[][20], char Items[][20], char Place[][20], char Time[][20]);
+void Input2(LinkList& Head, int& CollegeNum, int& ItemNum, char Colleges[][20], char Items[][20], char Place[][20]);
+void Create(LinkList& Head, int score, int rank, char sex[], char name[], char college[], char item[], char mark[], char place[], char time[]);
+void Show(LinkList Head);
+void Save(LinkList Head, char Colleges[][20], int CollegeNum, char Items[][20], int ItemNum, char Place[][20], char Time[][20]);
+void Read(LinkList Head, char Colleges[][20], int& CollegeNum, char Items[][20], int& ItemNum, char Place[][20], char Time[][20]);
+void Collegescore(LinkList Head, char Colleges[][20], int CollegeNum);
+void SexScore(LinkList Head, char Colleges[][20], int CollegeNum);
+void QueryCollege(LinkList Head);
+void QueryName(LinkList Head);
+void QueryItem(LinkList Head);
+void Insert(LinkList& Head, int score, int rank, char sex[], char name[], char college[], char item[], char mark[], char place[], char time[]);
+void Print(Node* p);
+void Printxiangmu(Node* p);
+void Free(LinkList& Head);
+void Timetable(LinkList Head);
+
+
+
+#include "sport.h"
+
+int main()
+{
+    LinkList Head;                    //选手数据链表
+    Init(Head);
+
+    int CollegeNum = 0;                  //学院数量
+    int ItemNum = 0;                     //项目数量 
+    char Colleges[N][20] = { '\0' };               //学院
+    char Items[N][20] = { '\0' };                  //运动会项目
+    char Place[N][20] = { '\0' };
+    char Time[N][20] = { '\0' };
+    int select = 0;
+    while (true)
+    {
+        printf("            欢迎使用运动会系统\n");
+        printf("********************************************\n");
+        printf("[1]输入比赛流程	         [2]读取运动员数据         \n");
+        printf("[3]打印数据              [4]保存数据          \n");
+        printf("[5]统计学院的总分        [6]男女团体总分       \n");
+        printf("[7]查询学院项目          [8]查找选手           \n");
+        printf("[9]查询项目获奖          [10]项目表                         \n");
+        printf("[0]退出系统			                        \n");
+        printf("*******************************************\n");
+        printf("请选择: >\n");
+        scanf("%d", &select);
+        switch (select)
+        {
+        case 1:
+        {
+            Input(Head, CollegeNum, ItemNum, Colleges, Items, Place,Time);
+            break;
+        }
+        case 2:
+            Input2(Head, CollegeNum, ItemNum, Colleges, Items, Place);
+            break;
+        case 3:
+            Show(Head);
+            break;
+        case 4:
+            Save(Head, Colleges, CollegeNum, Items, ItemNum, Place, Time);
+            break;
+        case 5:
+            Collegescore(Head, Colleges, CollegeNum);
+            break;
+        case 6:
+            SexScore(Head, Colleges, CollegeNum);
+            break;
+        case 7:
+            QueryCollege(Head);
+            break;
+        case 8:
+            QueryName(Head);
+            break;
+        case 9:
+            QueryItem(Head);
+            break;
+        case 10:
+            Timetable(Head);
+            break;
+        case 0:
+            Free(Head);
+            return 0;
+        default:
+            printf("输入的数据有误，请重新输入\n");
+            break;
+        }
+    }
+
+}
+
+
+
+
+
+
+
+#include "sport.h"
+
+
+//初始化头指针
+void Init(LinkList& Head)
+{
+
+    Head = (LinkNode*)malloc(sizeof(LinkNode)); //申请头结点
+    Head->rank = 0;
+    Head->score = 0;
+    strcpy(Head->sex, "");
+    strcpy(Head->name, "");
+    strcpy(Head->college, "");
+    strcpy(Head->item, "");
+    strcpy(Head->mark, "");
+    strcpy(Head->place, "");
+    strcpy(Head->time, "");
+
+    Head->next = NULL;
+}
+
+//根据排名得到相应的分数
+int GetScore(int rank)
+{
+    if (rank == 1)
+        return 9;
+    else if (rank == 2)
+        return 7;
+    else if (rank == 3)
+        return 6;
+    else if (rank == 4)
+        return 5;
+    else if (rank == 5)
+        return 4;
+    else if (rank == 6)
+        return 3;
+    else if (rank == 7)
+        return 2;
+    else if (rank == 8)
+        return 1;
+    else
+        return 0;
+}
+
+//初始化程序，输入学院名，项目名和选手成绩
+void Input(LinkList& Head, int& CollegeNum, int& ItemNum, char Colleges[][20], char Items[][20], char Place[][20], char Time[][20])
+{
+    int i, r, flag = 0;
+    int score = 0, rank = 0 ;                                // 存储输入变量;
+    char name[20] = { '\0' },sex[20] = { '\0' }, college[20] = { '\0' }, item[20] = { '\0' }, mark[20] = { '\0' }, place[20] = { '\0' }, time[20] = { '\0' }; // 存储输入变量存储;
+                                
+   
+    printf("请输入学院个数 \n");
+
+    while (r = scanf("%d", &CollegeNum) != 1 || CollegeNum > 10 || CollegeNum < 0)
+    {
+        printf(" 您的输入有误,请重新输入!  \n");
+        fflush(stdin); /*清空输入缓冲区，也可以使用rewind(stdin);*/
+    }
+
+    for (i = 0; i < CollegeNum; i++)
+    {
+        printf("请输入第%d学院名\n", i + 1);
+        scanf("%s", &Colleges[i]);
+        fflush(stdin);
+    }
+
+    printf("请输入项目个数\n");
+    while (r = scanf("%d", &ItemNum) != 1 || ItemNum > 10 || ItemNum < 0)
+    {
+        printf(" 您的输入有误,请重新输入!  \n");
+        fflush(stdin);
+    }
+    while (true)
+    {
+    for (i = 0; i < ItemNum; i++)
+    {
+        printf("请输入第%d项目名\n", i + 1);
+        scanf("%s", &Items[i]);
+        printf("请输入第%d项目地点\n", i + 1);
+        scanf("%s", &Place[i]);
+        printf("请输入第%d项目时间\n", i + 1);
+        scanf("%s", &Time[i]);
+    }
+    Create(Head, score, rank, sex, name, college, item, mark, place, time);
+
+        break;
+    }
+}
+
+void Input2(LinkList& Head, int& CollegeNum, int& ItemNum, char Colleges[][20], char Items[][20], char Place[][20])
+{
+    int i, r, flag = 0;
+    int score = 0, rank = 0;                                // 存储输入变量;
+    char name[20] = { '\0' }, sex[20] = { '\0' }, college[20] = { '\0' }, item[20] = { '\0' }, mark[20], place[20] = {'\0'}, time[20] = {'\0'}; // 存储输入变量存储;
+    int count = 1;                                                   // 计数器
+
+    
+    while (true)
+    {
+        fflush(stdin);
+
+        printf("请输入第%d个选手数据\n", count);
+        printf("请输入姓名\n");
+        r = scanf("%s", &name);
+        if (r == 0)
+        {
+            printf(" 您的输入有误,请重新输入!  \n");
+            break;
+        }
+        printf("请输入性别\n");
+        r = scanf("%s", &sex);
+        if (r == 0)
+        {
+            printf(" 您的输入有误,请重新输入!  \n");
+            break;
+        }
+        printf("请输入学院\n");
+        r = scanf("%s", &college);
+        if (r == 0)
+        {
+            printf(" 您的输入有误,请重新输入!  \n");
+            break;
+        }
+
+        printf("请输入项目\n");
+        r = scanf("%s", &item);
+        if (r == 0)
+        {
+            printf(" 您的输入有误,请重新输入!  \n");
+            break;
+        }
+
+        printf("请输入成绩\n");
+        r = scanf("%s", &mark);
+        if (r == 0)
+        {
+            printf(" 您的输入有误,请重新输入!  \n");
+            break;
+        }
+
+        printf("请输入名次 1-8\n");
+
+        r = scanf("%d", &rank);
+        if (r == 0 && rank < 0 && rank > 8)
+        {
+            printf(" 您的输入有误,请重新输入!  \n");
+            break;
+        }
+        score = GetScore(rank);
+
+        Create(Head, score, rank, sex, name, college, item,mark ,place, time);
+        count++;
+        printf("0 结束输入数据 , 1 输入数据\n");
+        scanf("%d", &flag);
+        if (flag == 0)
+            break;
+    }
+}
+
+//创建链表
+void Create(LinkList& Head, int score, int rank, char sex[], char name[], char college[], char item[],char mark[], char place[], char time[])
+{
+    LinkNode* p = Head->next, * s;
+    //如果链表为空，则做初始化链表
+    if (p == NULL)
+    {
+        s = (LinkNode*)malloc(sizeof(LinkNode));
+        assert(s != NULL);
+        s->score = score;
+        s->rank = rank;
+        strcpy(s->sex, sex);
+        strcpy(s->name, name);
+        strcpy(s->college, college);
+        strcpy(s->item, item);
+        strcpy(s->mark, mark);
+        strcpy(s->place, place);
+        strcpy(s->time, time);
+        s->next = NULL;
+        Head->next = s;
+    }
+    else
+    {
+        while (p->next != NULL)
+        {
+            p = p->next;
+        }
+        s = (LinkNode*)malloc(sizeof(LinkNode));
+        assert(s != NULL);
+        s->score = score;
+        s->rank = rank;
+        strcpy(s->sex, sex);
+        strcpy(s->name, name);
+        strcpy(s->college, college);
+        strcpy(s->item, item);
+        strcpy(s->mark, mark);
+        strcpy(s->place, place);
+        strcpy(s->time, time);
+        s->next = NULL;
+        p->next = s;
+    }
+}
+
+//打印所有的数据
+void Show(LinkList Head)
+{
+    int count = 1;
+    Node* p = Head->next->next;
+    while (p != NULL)
+    {
+        printf("打印第%d个成绩", count);
+        Print(p);
+        p = p->next;
+        count++;
+    }
+}
+
+//保存数据为.txt文件
+void Save(LinkList Head, char Colleges[][20], int CollegesNum, char Items[][20], int ItemNum, char Place[][20], char Time[][20])
+{
+    int i;
+    //保存选手数据
+    FILE* file;
+    file = fopen("sports_data.txt", "w");
+    if (file == NULL)
+    {
+        printf("文件创建失败请检查！\n");
+        exit(0);
+    }
+
+    Node* p = Head->next;
+    while (p != NULL)
+    {
+
+        fprintf(file, "%s\t", p->name);
+
+        fprintf(file, "%d\t", p->sex);
+
+        fprintf(file, "%s\t", p->college);
+
+        fprintf(file, "%s\t", p->item);
+
+        fprintf(file, "%s\t", p->mark);
+
+        fprintf(file, "%s\t", p->place);
+
+        fprintf(file, "%s\t", p->time);
+
+        fprintf(file, "%d\t", p->rank);
+
+        fprintf(file, "%d\n", p->score);
+        p = p->next;
+    }
+    fclose(file);
+    file = NULL; //将指针置为NULL ，打开另一个文件
+
+    file = fopen("Colleges_Items.txt", "w");
+    if (file == NULL)
+    {
+        printf("文件创建失败请检查！\n");
+        exit(0);
+    }
+    //保存项目数和学院数
+    fprintf(file, "%d\t", CollegesNum);
+    fprintf(file, "%d\t", ItemNum);
+
+    //保存项目名字和学院名字和地点
+    for (i = 0; i < CollegesNum; i++)
+    {
+        fprintf(file, "%s\t", Colleges[i]);
+    }
+    for (i = 0; i < ItemNum; i++)
+    {
+        fprintf(file, "%s\t", Items[i]);
+    }
+    for (i = 0; i < ItemNum; i++)
+    {
+        fprintf(file, "%s\t", Place[i]);
+    }
+    for (i = 0; i < ItemNum; i++)
+    {
+        fprintf(file, "%s\t", Time[i]);
+    }
+    fclose(file);
+}
+//读取txt文件中的数据
+void Read(LinkList Head, char Colleges[][20], int& CollegesNum, char Items[][20], int& ItemNum, char Place[][20], char Time[][20])
+{
+    if (Head->next != NULL)
+    {
+        printf("已读取数据！\n");
+        return;
+    }
+
+    FILE* file;
+    int i = 0;
+
+    file = fopen("sports_data.txt", "r");
+    if (file == NULL)
+    {
+        printf("文件读取失败请初始化！\n");
+        exit(0);
+    }
+
+    int score, rank;                 // 作为输入变量存储;
+    char name[20], college[20], item[20], sex[20], place[20], time[20], mark[20]; // 作为输入变量存储;
+    //当指针不为结束符，一直++
+    //读入所有的选手成绩
+    while (!feof(file))
+    {
+        fscanf(file, "%s", &name);
+
+        fscanf(file, "%d\t", &sex);
+
+        fscanf(file, "%s\t", &college);
+
+        fscanf(file, "%s\t", &item);
+
+        fscanf(file, "%s\t", &mark);
+
+        fscanf(file, "%s\t", &place);
+
+        fscanf(file, "%s\t", &time);
+
+        fscanf(file, "%d\t", &rank);
+
+        fscanf(file, "%d\n", &score);
+        Create(Head, score, rank, sex, name, college, item, mark, place,time);
+    }
+    fclose(file);
+
+    //读取学院名字和项目名字
+    file = NULL;
+    file = fopen("colleges_items.txt", "r");
+    if (file == NULL)
+    {
+        printf("文件读取失败请初始化！\n");
+        exit(0);
+    }
+
+    while (!feof(file))
+    {
+        fscanf(file, "%d\t", &CollegesNum);
+
+        fscanf(file, "%d\t", &ItemNum);
+
+        for (i = 0; i < CollegesNum; i++)
+        {
+            fscanf(file, "%s\t", &Colleges[i]);
+        }
+
+        for (i = 0; i < CollegesNum; i++)
+        {
+            fscanf(file, "%s\t", &Items[i]);
+        }
+
+        for (i = 0; i < CollegesNum; i++)
+        {
+            fscanf(file, "%s\t", &Place[i]);
+        }
+
+        for (i = 0; i < CollegesNum; i++)
+        {
+            fscanf(file, "%s\t", &Time[i]);
+        }
+    }
+
+    fclose(file);
+}
+
+//学院分数
+void Collegescore(LinkList Head, char Colleges[][20], int CollegesNum)
+{
+    int score[N] = { 0 }; //
+    int i;
+    LinkList list;
+    Node* p = NULL;
+    //计算每个学院的分数
+    Init(list);
+    for (i = 0; i < CollegesNum; i++)
+    {
+
+        p = Head->next;
+
+        while (p != NULL)
+        {
+            if (strcmp(Colleges[i], p->college) == 0)
+            {
+                score[i] += p->score;
+            }
+            p = p->next;
+        }
+    }
+
+    //按分数大小建立一个链表
+    for (i = 0; i < CollegesNum; i++)
+    {
+        Insert(list, score[i], 0, "", "", Colleges[i], "", "", "","");
+    }
+
+    //打印学院成绩
+
+    p = NULL;
+    p = list->next;
+    while (p != NULL)
+    {
+        printf("%s学院得分为%8d\n", p->college, p->score);
+        p = p->next;
+    }
+
+    Free(list);
+}
+
+//释放链表
+void Free(LinkList& Head)
+{
+    Node* p = NULL, * q = NULL;
+    p = Head->next;
+    //链表为空直接返回
+    if (p == NULL)
+    {
+        free(Head);
+        return;
+    }
+    while (p != NULL)
+    {
+        q = p;
+        p = p->next;
+        free(q);
+    }
+    free(Head);
+}
+
+//按男女统计得分
+void SexScore(LinkList Head, char Colleges[][20], int CollegesNum)
+{
+    LinkList man_score, woman_score;
+    Init(man_score);
+    Init(woman_score);
+    int i;
+
+    for (i = 0; i < CollegesNum; i++)
+    {
+        int a[N] = { 0 };
+        Node* p = Head->next;
+
+        LinkList man, womon;
+        Init(man);
+        Init(womon);
+
+        while (p != NULL)
+        { //统计某学院男生，女生成绩
+            if (strcmp(Colleges[i], p->college) == 0 && p->sex == "女")
+            {
+                Insert(womon, p->score, p->rank, p->sex, p->name, p->college, p->item, p->mark, p->place, p->time);
+            }
+
+            if (strcmp(Colleges[i], p->college) == 0 && p->sex == "男")
+            {
+                Insert(man, p->score, p->rank, p->sex, p->name, p->college, p->item, p->mark, p->place, p->time);
+            }
+            p = p->next;
+        }
+
+        p = man->next;
+
+        while (p != NULL)
+        {
+            a[i] += p->score;
+            p = p->next;
+        }
+
+        Insert(man_score, a[i], 0, "", "", Colleges[i], "", "", "","");
+
+        p = NULL;
+        a[i] = 0;
+        p = womon->next;
+        while (p != NULL)
+        {
+            a[i] += p->score;
+            p = p->next;
+        }
+        Insert(woman_score, a[i], 0, "", "", Colleges[i], "", "", "","");
+        Free(man);
+        Free(womon);
+    }
+
+    Node* q;
+    q = man_score->next;
+    printf("学院男生团体的前八名为\n");
+    while (q != NULL)
+    {
+        printf("%s男生团体得分为:   %d\n", q->college, q->score);
+        q = q->next;
+    }
+    q = NULL;
+    q = woman_score->next;
+    printf("学院女生团体的前八名为\n");
+    while (q != NULL)
+    {
+        printf("%s女生团体得分为:   %d\n", q->college, q->score);
+        q = q->next;
+    }
+
+    Free(man_score);
+    Free(woman_score);
+}
+//查询某学院某个项目获奖情况
+void QueryCollege(LinkList Head)
+{
+
+    char item[20], college[20];
+
+    printf("请输入您要查询的学院名:\n");
+    scanf("%s", &college);
+
+    printf("请输入您要查询的项目名:\n");
+    scanf("%s", &item);
+
+    Node* p = Head->next;
+
+    while (p != NULL)
+    {
+        if (strcmp(college, p->college) == 0 && strcmp(item, p->item) == 0)
+        {
+            Print(p);
+        }
+        p = p->next;
+    }
+}
+//查询选手成绩
+void QueryName(LinkList Head)
+{
+    char name[20];
+
+    printf("请输入您要查询的选手姓名:\n");
+    scanf("%s", &name);
+
+    Node* p = Head->next;
+
+    while (p != NULL)
+    {
+        if (strcmp(name, p->name) == 0)
+        {
+            Print(p);
+        }
+        p = p->next;
+    }
+}
+
+// 按大小顺序插入建立一个链表
+void Insert(LinkList& Head, int score, int rank, char* sex, char* name, char* college, char* item,char* mark , char* place, char* time)
+{
+    LinkNode* p = Head->next, * s = NULL;
+    LinkNode* q = Head;
+    //如果链表为空，则做初始化链表
+    if (p == NULL)
+    {
+        s = (LinkNode*)malloc(sizeof(LinkNode));
+        assert(s != NULL);
+        s->score = score;
+        s->rank = rank;
+        strcpy(s->sex, sex);
+        strcpy(s->name, name);
+        strcpy(s->college, college);
+        strcpy(s->item, item);
+        strcpy(s->mark, mark);
+        strcpy(s->place, place);
+        strcpy(s->time, time);
+        s->next = NULL;
+        Head->next = s;
+    }
+    else
+    {
+        while (p != NULL && score <= p->score)
+        {
+            q = p;
+            p = p->next;
+        }
+        s = (LinkNode*)malloc(sizeof(LinkNode));
+        assert(s != NULL);
+        s->score = score;
+        s->rank = rank;
+        strcpy(s->sex, sex);
+        strcpy(s->name, name);
+        strcpy(s->college, college);
+        strcpy(s->item, item);
+        strcpy(s->mark, mark);
+        strcpy(s->place, place);
+        strcpy(s->time, time);
+        s->next = p;
+        q->next = s;
+    }
+}
+
+//查询项目得分情况
+void QueryItem(LinkList Head)
+{
+    char item[20];
+    LinkList t;
+    Init(t);
+
+    printf("请输入您要查询的项目名:\n");
+    scanf("%s", &item);
+
+    Node* p = Head->next;
+
+    while (p != NULL)
+    {
+        if (strcmp(item, p->item) == 0)
+        {
+            Insert(t, p->score, p->rank, p->sex, p->name, p->college, p->item, p->mark, p->place, p->time);
+        }
+        p = p->next;
+    }
+
+    p = t->next;
+    printf("%s项目前八名为\n", item);
+
+    while (p != NULL)
+    {
+        Print(p);
+        p = p->next;
+    }
+}
+
+//打印指针内的数据
+void Print(Node* p)
+{
+    
+    printf("*************************\n");
+    printf("姓名为          ");
+    printf("%s\n", p->name);
+
+    printf("性别为          ");
+    printf("%s\n", p->sex);
+
+    printf("学院为          ");
+    printf("%s\n", p->college);
+
+    printf("项目为          ");
+    printf("%s\n", p->item);
+
+    printf("成绩为          ");
+    printf("%s\n", p->mark);
+
+    printf("名次为          ");
+    printf("%d\n", p->rank);
+
+    printf("分数为          ");
+    printf("%d\n", p->score);
+    
+    printf("\n\n\n\n");
+}
+
+// 打印项目表和秩序册
+void Timetable(LinkList Head) {
+    LinkNode* p = Head->next;
+    printf("                  项目表\n");
+    printf("|----------------------------------------------|\n");
+    while (p != NULL)
+    {
+        Printxiangmu(p);
+        p = p->next;
+    }
+
+
+}
+
+void Printxiangmu(LinkNode* p)
+{
+    printf("  %s", p->item); 
+    printf("          %s",p->place);
+    printf("          %s", p->time);
+    printf("\n");
+}
